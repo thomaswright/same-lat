@@ -117,7 +117,7 @@ export default function MapLayer({
 
     const svg = d3.select(svgRef.current);
     const bbox = svgRef.current.getBoundingClientRect();
-    const pixelsPerRotation = bbox.width / 360;
+    const pixelsPerRotation = (bbox.width / 360) * zoom;
 
     const dragBehavior = d3
       .drag()
@@ -138,7 +138,7 @@ export default function MapLayer({
     return () => {
       svg.on(".drag", null);
     };
-  }, [interactive, onRotate]);
+  }, [interactive, onRotate, zoom]);
 
   const baseClasses = [
     "w-full",

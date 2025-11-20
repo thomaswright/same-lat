@@ -40,9 +40,9 @@ export default function SameLatMap() {
   const MAX_ZOOM = 10;
   const ZOOM_STEP = 1.2;
 
-  const adjustZoom = (delta) => {
+  const adjustZoom = (newZoom) => {
     setZoom((prev) => {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev * delta));
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
       return Number(next.toFixed(2));
     });
   };
@@ -118,7 +118,7 @@ export default function SameLatMap() {
             <div className="mt-2 flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => adjustZoom(-ZOOM_STEP)}
+                onClick={() => adjustZoom(zoom / ZOOM_STEP)}
                 disabled={zoom <= MIN_ZOOM + 1e-3}
                 className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Zoom out"
@@ -130,7 +130,7 @@ export default function SameLatMap() {
               </span>
               <button
                 type="button"
-                onClick={() => adjustZoom(ZOOM_STEP)}
+                onClick={() => adjustZoom(zoom * ZOOM_STEP)}
                 disabled={zoom >= MAX_ZOOM - 1e-3}
                 className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Zoom in"
