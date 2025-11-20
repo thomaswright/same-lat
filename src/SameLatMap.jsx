@@ -21,6 +21,8 @@ export default function SameLatMap() {
   const [flipPoles, setFlipPoles] = useState(false);
   const dragBarRef = useRef(null);
   const mapContainerRef = useRef(null);
+  const panFrameRef = useRef(null);
+  const panWorkingRef = useRef(panOffset);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +66,16 @@ export default function SameLatMap() {
   const ZOOM_STEP = 1.2;
 
   const ENABLE_WHEEL_ZOOM = false;
+
+  useEffect(() => {
+    panWorkingRef.current = panOffset;
+    return () => {
+      if (panFrameRef.current !== null) {
+        cancelAnimationFrame(panFrameRef.current);
+        panFrameRef.current = null;
+      }
+    };
+  }, [panOffset]);
 
   const adjustZoom = useCallback(
     (newZoom, anchor) => {
@@ -112,6 +124,20 @@ export default function SameLatMap() {
     },
     [zoom, adjustZoom]
   );
+
+  const handlePanDrag = useCallback((dx, dy) => {
+    panWorkingRef.current = {
+      x: panWorkingRef.current.x + dx,
+      y: panWorkingRef.current.y + dy,
+    };
+
+    if (panFrameRef.current !== null) return;
+
+    panFrameRef.current = requestAnimationFrame(() => {
+      setPanOffset(panWorkingRef.current);
+      panFrameRef.current = null;
+    });
+  }, []);
 
   const handleDragBarPointerDown = useCallback(
     (event) => {
@@ -201,7 +227,7 @@ export default function SameLatMap() {
           zoom={zoom}
           panOffset={panOffset}
           flipPoles={flipPoles}
-          onPan={setPanOffset}
+          onPan={handlePanDrag}
           interactive
           accentLatitudes={accentLatitudes}
           label=""

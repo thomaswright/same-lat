@@ -143,11 +143,7 @@ export default function MapLayer({
         svg.style("cursor", "grabbing");
       })
       .on("drag", (event) => {
-        const { dx, dy } = event;
-        onPan((prev) => ({
-          x: prev.x + dx,
-          y: prev.y + dy,
-        }));
+        onPan(event.dx, event.dy);
       })
       .on("end", () => {
         svg.classed("is-dragging", false);
@@ -171,7 +167,6 @@ export default function MapLayer({
   ]
     .filter(Boolean)
     .join(" ");
-
   return (
     <svg
       ref={svgRef}
