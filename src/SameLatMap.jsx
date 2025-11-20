@@ -131,7 +131,7 @@ export default function SameLatMap() {
               >
                 -
               </button>
-              <span className="min-w-[3.5rem] text-center text-sm font-semibold text-slate-50">
+              <span className="min-w-14 text-center text-sm font-semibold text-slate-50">
                 {Math.round(zoom * 100)}%
               </span>
               <button
