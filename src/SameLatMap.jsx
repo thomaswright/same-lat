@@ -3,9 +3,11 @@ import * as topojson from "topojson-client";
 import MapLayer from "./MapLayer";
 
 const dataUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+const usStatesUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
 export default function SameLatMap() {
   const [features, setFeatures] = useState([]);
+  const [stateFeatures, setStateFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rotation, setRotation] = useState(0);
@@ -18,12 +20,21 @@ export default function SameLatMap() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch(dataUrl);
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        const topo = await res.json();
+        const [worldRes, statesRes] = await Promise.all([
+          fetch(dataUrl),
+          fetch(usStatesUrl),
+        ]);
+        if (!worldRes.ok) throw new Error(`Request failed: ${worldRes.status}`);
+        if (!statesRes.ok) throw new Error(`Request failed: ${statesRes.status}`);
+        const [worldTopo, statesTopo] = await Promise.all([
+          worldRes.json(),
+          statesRes.json(),
+        ]);
         if (cancelled) return;
-        const geo = topojson.feature(topo, topo.objects.countries);
-        setFeatures(geo.features);
+        const countries = topojson.feature(worldTopo, worldTopo.objects.countries);
+        const states = topojson.feature(statesTopo, statesTopo.objects.states);
+        setFeatures(countries.features);
+        setStateFeatures(states.features);
       } catch (err) {
         if (!cancelled) setError(err);
       } finally {
@@ -96,6 +107,7 @@ export default function SameLatMap() {
         <MapLayer
           isOverlay={false}
           features={features}
+          stateFeatures={stateFeatures}
           rotation={0}
           zoom={zoom}
           panOffset={panOffset}
@@ -106,6 +118,7 @@ export default function SameLatMap() {
         <MapLayer
           isOverlay={true}
           features={features}
+          stateFeatures={stateFeatures}
           rotation={rotation}
           zoom={zoom}
           panOffset={panOffset}

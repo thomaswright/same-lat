@@ -12,6 +12,7 @@ function normalizeRotation(value) {
 export default function MapLayer({
   isOverlay,
   features,
+  stateFeatures = [],
   rotation = 0,
   zoom = 1,
   panOffset = { x: 0, y: 0 },
@@ -93,6 +94,23 @@ export default function MapLayer({
       )
       .attr("stroke-width", 0.6);
 
+    if (stateFeatures.length) {
+      svg
+        .append("g")
+        .selectAll("path")
+        .data(stateFeatures)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr(
+          "stroke",
+          isOverlay
+            ? "var(--map-state-outline-overlay)"
+            : "var(--map-state-outline)"
+        )
+        .attr("stroke-width", 0.4);
+    }
+
     if (label) {
       svg
         .append("text")
@@ -111,6 +129,7 @@ export default function MapLayer({
     zoom,
     panOffset,
     flipPoles,
+    stateFeatures,
     accentLatitudes,
     label,
     interactive,

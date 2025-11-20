@@ -15,7 +15,9 @@
   --map-land: #78d5ff;
   --map-land-overlay: #ff78e4;
   --map-outline: rgba(0, 0, 0, 0.15);
-  --map-outline-overlay: rgba(0, 0, 0, 0.15);
+  --map-state-outline: rgba(0, 0, 0, 0.15);
+  --map-outline-overlay: rgba(0, 0, 0, 0.4);
+  --map-state-outline-overlay: rgba(0, 0, 0, 0.4);
 }
 
 * {
