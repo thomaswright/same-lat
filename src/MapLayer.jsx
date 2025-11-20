@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as d3 from "d3";
 
-const width = 700;
-const height = 400;
-
-function normalizeRotation(value) {
-  const wrapped = ((value % 360) + 360) % 360;
-  return wrapped > 180 ? wrapped - 360 : wrapped;
-}
+export const MAP_DIMENSIONS = { width: 700, height: 400 };
+const { width, height } = MAP_DIMENSIONS;
 
 export default function MapLayer({
   isOverlay,
@@ -18,7 +13,7 @@ export default function MapLayer({
   panOffset = { x: 0, y: 0 },
   flipPoles = false,
   interactive = false,
-  onRotate,
+  onPan,
   label,
   accentLatitudes = [],
   className = "",
@@ -137,11 +132,9 @@ export default function MapLayer({
   ]);
 
   useEffect(() => {
-    if (!interactive || !onRotate || !svgRef.current) return;
+    if (!interactive || !onPan || !svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const bbox = svgRef.current.getBoundingClientRect();
-    const pixelsPerRotation = (bbox.width / 360) * zoom;
 
     const dragBehavior = d3
       .drag()
@@ -150,8 +143,11 @@ export default function MapLayer({
         svg.style("cursor", "grabbing");
       })
       .on("drag", (event) => {
-        const delta = -1 * (event.dx / pixelsPerRotation);
-        onRotate((prev) => normalizeRotation(prev - delta));
+        const { dx, dy } = event;
+        onPan((prev) => ({
+          x: prev.x + dx,
+          y: prev.y + dy,
+        }));
       })
       .on("end", () => {
         svg.classed("is-dragging", false);
@@ -162,7 +158,7 @@ export default function MapLayer({
     return () => {
       svg.on(".drag", null);
     };
-  }, [interactive, onRotate, zoom]);
+  }, [interactive, onPan]);
 
   const baseClasses = [
     "w-full",

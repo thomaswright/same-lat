@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as topojson from "topojson-client";
-import MapLayer from "./MapLayer";
+import MapLayer, { MAP_DIMENSIONS } from "./MapLayer";
 
 const dataUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 const usStatesUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+
+function normalizeRotation(value) {
+  const wrapped = ((value % 360) + 360) % 360;
+  return wrapped > 180 ? wrapped - 360 : wrapped;
+}
 
 export default function SameLatMap() {
   const [features, setFeatures] = useState([]);
@@ -14,6 +19,8 @@ export default function SameLatMap() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [flipPoles, setFlipPoles] = useState(false);
+  const dragBarRef = useRef(null);
+  const mapContainerRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,24 +63,90 @@ export default function SameLatMap() {
   const MAX_ZOOM = 10;
   const ZOOM_STEP = 1.2;
 
-  const adjustZoom = (newZoom) => {
-    let boundZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
-    let nextZoom = Number(boundZoom.toFixed(2));
-    let zoomRatio = nextZoom / zoom;
-    setPanOffset((prev) => ({
-      x: prev.x * zoomRatio,
-      y: prev.y * zoomRatio,
-    }));
-    setZoom(nextZoom);
-  };
+  const ENABLE_WHEEL_ZOOM = false;
 
-  const handleWheelPan = useCallback((event) => {
-    event.preventDefault();
-    setPanOffset((prev) => ({
-      x: prev.x - event.deltaX,
-      y: prev.y - event.deltaY,
-    }));
-  }, []);
+  const adjustZoom = useCallback(
+    (newZoom, anchor) => {
+      let boundZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+      let nextZoom = Number(boundZoom.toFixed(2));
+      if (Math.abs(nextZoom - zoom) < 1e-4) {
+        return;
+      }
+      let zoomRatio = nextZoom / zoom;
+      setPanOffset((prev) => {
+        if (!anchor) {
+          return {
+            x: prev.x * zoomRatio,
+            y: prev.y * zoomRatio,
+          };
+        }
+        return {
+          x: (prev.x - anchor.x) * zoomRatio + anchor.x,
+          y: (prev.y - anchor.y) * zoomRatio + anchor.y,
+        };
+      });
+      setZoom(nextZoom);
+    },
+    [zoom]
+  );
+
+  const handleWheelZoom = useCallback(
+    (event) => {
+      if (!ENABLE_WHEEL_ZOOM || !mapContainerRef.current) return;
+      event.preventDefault();
+      const zoomFactor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+      const offsetX = pointerX - rect.width / 2;
+      const offsetY = pointerY - rect.height / 2;
+
+      const scaleX = MAP_DIMENSIONS.width / rect.width;
+      const scaleY = MAP_DIMENSIONS.height / rect.height;
+      const anchor = {
+        x: offsetX * scaleX,
+        y: offsetY * scaleY,
+      };
+
+      adjustZoom(zoom * zoomFactor, anchor);
+    },
+    [zoom, adjustZoom]
+  );
+
+  const handleDragBarPointerDown = useCallback(
+    (event) => {
+      if (!dragBarRef.current) return;
+      event.preventDefault();
+      dragBarRef.current.setPointerCapture?.(event.pointerId);
+
+      const startX = event.clientX;
+      const startRotation = rotation;
+      const { width } = dragBarRef.current.getBoundingClientRect();
+      const pixelsPerFullRotation = width || 1;
+      const baseDegreesPerPixel = 360 / pixelsPerFullRotation;
+      const degreesPerPixel = baseDegreesPerPixel / zoom;
+
+      const handlePointerMove = (moveEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const nextRotation = normalizeRotation(
+          startRotation + deltaX * degreesPerPixel
+        );
+        setRotation(nextRotation);
+      };
+
+      const cleanup = () => {
+        dragBarRef.current?.releasePointerCapture?.(event.pointerId);
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", cleanup);
+        window.removeEventListener("pointercancel", cleanup);
+      };
+
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", cleanup);
+      window.addEventListener("pointercancel", cleanup);
+    },
+    [rotation, zoom]
+  );
 
   if (loading) {
     return (
@@ -105,8 +178,9 @@ export default function SameLatMap() {
   return (
     <div className="p-4">
       <div
-        onWheel={handleWheelPan}
+        ref={mapContainerRef}
         className="relative overflow-hidden aspect-2/1"
+        onWheel={ENABLE_WHEEL_ZOOM ? handleWheelZoom : undefined}
       >
         <MapLayer
           isOverlay={false}
@@ -127,12 +201,13 @@ export default function SameLatMap() {
           zoom={zoom}
           panOffset={panOffset}
           flipPoles={flipPoles}
-          onRotate={setRotation}
+          onPan={setPanOffset}
           interactive
           accentLatitudes={accentLatitudes}
           label=""
           className="absolute inset-0 opacity-70 mix-blend-screen cursor-grab active:cursor-grabbing"
         />
+
         <div className="absolute top-3 right-3 flex flex-col gap-2 text-slate-100">
           <div className=" flex items-center gap-2">
             <button
@@ -157,9 +232,14 @@ export default function SameLatMap() {
           </div>
         </div>
       </div>
-      <p className="pt-3 text-sm text-slate-300">
-        Drag to overlay locations of the same latitude.
-      </p>
+      <div
+        id={"drag-bar"}
+        ref={dragBarRef}
+        onPointerDown={handleDragBarPointerDown}
+        className="h-8 w-full bg-slate-700 rounded-xl text-center select-none cursor-ew-resize mt-2"
+      >
+        Drag along this bar to adjust the overlay map
+      </div>
       <div className="mt-2 flex gap-2">
         <button
           className="rounded bg-slate-700 px-3 py-1 text-sm font-semibold text-white transition hover:bg-slate-600 disabled:opacity-50"
