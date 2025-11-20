@@ -11,6 +11,7 @@ export default function SameLatMap() {
   const [rotation, setRotation] = useState(0);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [flipPoles, setFlipPoles] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,9 +49,7 @@ export default function SameLatMap() {
       x: prev.x * zoomRatio,
       y: prev.y * zoomRatio,
     }));
-    setZoom((prev) => {
-      return nextZoom;
-    });
+    setZoom(nextZoom);
   };
 
   const handleWheelPan = useCallback((event) => {
@@ -110,6 +109,7 @@ export default function SameLatMap() {
           rotation={rotation}
           zoom={zoom}
           panOffset={panOffset}
+          flipPoles={flipPoles}
           onRotate={setRotation}
           interactive
           accentLatitudes={accentLatitudes}
@@ -150,13 +150,22 @@ export default function SameLatMap() {
       <p className="pt-3 text-sm text-slate-300">
         Drag to overlay locations of the same latitude.
       </p>
-      <button
-        className="bg-slate-700 text-white px-3 py-1 rounded my-1"
-        onClick={(_) => setRotation(0)}
-        disabled={rotation == 0}
-      >
-        Reset
-      </button>
+      <div className="mt-2 flex gap-2">
+        <button
+          className="rounded bg-slate-700 px-3 py-1 text-sm font-semibold text-white transition hover:bg-slate-600 disabled:opacity-50"
+          onClick={() => setRotation(0)}
+          disabled={rotation === 0}
+        >
+          Reset
+        </button>
+        <button
+          className="rounded bg-slate-800 px-3 py-1 text-sm font-semibold text-white transition hover:bg-slate-700"
+          onClick={() => setFlipPoles((prev) => !prev)}
+          aria-pressed={flipPoles}
+        >
+          {flipPoles ? "Unflip" : "Flip"}
+        </button>
+      </div>
     </div>
   );
 }

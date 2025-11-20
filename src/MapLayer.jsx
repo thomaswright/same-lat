@@ -15,6 +15,7 @@ export default function MapLayer({
   rotation = 0,
   zoom = 1,
   panOffset = { x: 0, y: 0 },
+  flipPoles = false,
   interactive = false,
   onRotate,
   label,
@@ -34,6 +35,7 @@ export default function MapLayer({
     const baseProjection = d3
       .geoNaturalEarth1()
       .rotate([rotation, 0])
+      .reflectY(flipPoles)
       .fitSize([width, height], { type: "Sphere" });
 
     const scaledProjection = baseProjection.scale(
@@ -108,6 +110,7 @@ export default function MapLayer({
     rotation,
     zoom,
     panOffset,
+    flipPoles,
     accentLatitudes,
     label,
     interactive,
