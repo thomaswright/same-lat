@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as d3 from "d3";
 
-const width = 960;
-const height = 320;
+const width = 700;
+const height = 400;
 
 function normalizeRotation(value) {
   const wrapped = ((value % 360) + 360) % 360;

@@ -65,7 +65,7 @@ export default function SameLatMap() {
 
   return (
     <div className="p-4">
-      <div className="relative overflow-hidden aspect-3/1">
+      <div className="relative overflow-hidden aspect-2/1">
         <MapLayer
           features={features}
           rotation={0}
