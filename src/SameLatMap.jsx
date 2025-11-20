@@ -25,13 +25,17 @@ export default function SameLatMap() {
           fetch(usStatesUrl),
         ]);
         if (!worldRes.ok) throw new Error(`Request failed: ${worldRes.status}`);
-        if (!statesRes.ok) throw new Error(`Request failed: ${statesRes.status}`);
+        if (!statesRes.ok)
+          throw new Error(`Request failed: ${statesRes.status}`);
         const [worldTopo, statesTopo] = await Promise.all([
           worldRes.json(),
           statesRes.json(),
         ]);
         if (cancelled) return;
-        const countries = topojson.feature(worldTopo, worldTopo.objects.countries);
+        const countries = topojson.feature(
+          worldTopo,
+          worldTopo.objects.countries
+        );
         const states = topojson.feature(statesTopo, statesTopo.objects.states);
         setFeatures(countries.features);
         setStateFeatures(states.features);
@@ -130,33 +134,26 @@ export default function SameLatMap() {
           className="absolute inset-0 opacity-70 mix-blend-screen cursor-grab active:cursor-grabbing"
         />
         <div className="absolute top-3 right-3 flex flex-col gap-2 text-slate-100">
-          <div className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 shadow-xl backdrop-blur">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-              Zoom
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => adjustZoom(zoom / ZOOM_STEP)}
-                disabled={zoom <= MIN_ZOOM + 1e-3}
-                className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Zoom out"
-              >
-                -
-              </button>
-              <span className="min-w-14 text-center text-sm font-semibold text-slate-50">
-                {Math.round(zoom * 100)}%
-              </span>
-              <button
-                type="button"
-                onClick={() => adjustZoom(zoom * ZOOM_STEP)}
-                disabled={zoom >= MAX_ZOOM - 1e-3}
-                className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Zoom in"
-              >
-                +
-              </button>
-            </div>
+          <div className=" flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => adjustZoom(zoom / ZOOM_STEP)}
+              disabled={zoom <= MIN_ZOOM + 1e-3}
+              className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Zoom out"
+            >
+              -
+            </button>
+
+            <button
+              type="button"
+              onClick={() => adjustZoom(zoom * ZOOM_STEP)}
+              disabled={zoom >= MAX_ZOOM - 1e-3}
+              className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Zoom in"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>
