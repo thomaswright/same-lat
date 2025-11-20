@@ -148,9 +148,15 @@ export default function SameLatMap() {
         </div>
       </div>
       <p className="pt-3 text-sm text-slate-300">
-        Drag to rotate the overlay; scroll anywhere on the map to pan both
-        layers horizontally or vertically. Use the buttons to zoom.
+        Drag to overlay locations of the same latitude.
       </p>
+      <button
+        className="bg-slate-700 text-white px-3 py-1 rounded my-1"
+        onClick={(_) => setRotation(0)}
+        disabled={rotation == 0}
+      >
+        Reset
+      </button>
     </div>
   );
 }
