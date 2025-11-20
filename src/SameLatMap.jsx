@@ -41,9 +41,15 @@ export default function SameLatMap() {
   const ZOOM_STEP = 1.2;
 
   const adjustZoom = (newZoom) => {
+    let boundZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+    let nextZoom = Number(boundZoom.toFixed(2));
+    let zoomRatio = nextZoom / zoom;
+    setPanOffset((prev) => ({
+      x: prev.x * zoomRatio,
+      y: prev.y * zoomRatio,
+    }));
     setZoom((prev) => {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
-      return Number(next.toFixed(2));
+      return nextZoom;
     });
   };
 
