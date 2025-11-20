@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as topojson from "topojson-client";
 import MapLayer from "./MapLayer";
 
-const dataUrl =
-  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const dataUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
 export default function SameLatMap() {
   const [features, setFeatures] = useState([]);
@@ -38,12 +37,12 @@ export default function SameLatMap() {
 
   const accentLatitudes = useMemo(() => [-60, -30, 0, 30, 60], []);
   const MIN_ZOOM = 0.8;
-  const MAX_ZOOM = 5;
-  const ZOOM_STEP = 0.2;
+  const MAX_ZOOM = 10;
+  const ZOOM_STEP = 1.2;
 
   const adjustZoom = (delta) => {
     setZoom((prev) => {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta));
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev * delta));
       return Number(next.toFixed(2));
     });
   };
