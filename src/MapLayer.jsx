@@ -13,6 +13,8 @@ export default function MapLayer({
   isOverlay,
   features,
   rotation = 0,
+  zoom = 1,
+  panOffset = { x: 0, y: 0 },
   interactive = false,
   onRotate,
   label,
@@ -29,10 +31,17 @@ export default function MapLayer({
     svg.style("cursor", interactive ? "grab" : null);
     svg.selectAll("*").remove();
 
-    const projection = d3
+    const baseProjection = d3
       .geoNaturalEarth1()
       .rotate([rotation, 0])
       .fitSize([width, height], { type: "Sphere" });
+
+    const scaledProjection = baseProjection.scale(baseProjection.scale() * zoom);
+    const [tx, ty] = baseProjection.translate();
+    const projection = scaledProjection.translate([
+      tx + panOffset.x,
+      ty + panOffset.y,
+    ]);
 
     const path = d3.geoPath(projection);
 
@@ -91,7 +100,17 @@ export default function MapLayer({
         .attr("letter-spacing", 0.5)
         .text(label);
     }
-  }, [features, graticule, rotation, accentLatitudes, label]);
+  }, [
+    features,
+    graticule,
+    rotation,
+    zoom,
+    panOffset,
+    accentLatitudes,
+    label,
+    interactive,
+    isOverlay,
+  ]);
 
   useEffect(() => {
     if (!interactive || !onRotate || !svgRef.current) return;

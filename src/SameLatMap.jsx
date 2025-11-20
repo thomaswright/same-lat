@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as topojson from "topojson-client";
 import MapLayer from "./MapLayer";
 
@@ -10,6 +10,8 @@ export default function SameLatMap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rotation, setRotation] = useState(0);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +37,24 @@ export default function SameLatMap() {
   }, []);
 
   const accentLatitudes = useMemo(() => [-60, -30, 0, 30, 60], []);
+  const MIN_ZOOM = 0.8;
+  const MAX_ZOOM = 5;
+  const ZOOM_STEP = 0.2;
+
+  const adjustZoom = (delta) => {
+    setZoom((prev) => {
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta));
+      return Number(next.toFixed(2));
+    });
+  };
+
+  const handleWheelPan = useCallback((event) => {
+    event.preventDefault();
+    setPanOffset((prev) => ({
+      x: prev.x - event.deltaX,
+      y: prev.y - event.deltaY,
+    }));
+  }, []);
 
   if (loading) {
     return (
@@ -65,11 +85,16 @@ export default function SameLatMap() {
 
   return (
     <div className="p-4">
-      <div className="relative overflow-hidden aspect-2/1">
+      <div
+        onWheel={handleWheelPan}
+        className="relative overflow-hidden aspect-2/1"
+      >
         <MapLayer
           isOverlay={false}
           features={features}
           rotation={0}
+          zoom={zoom}
+          panOffset={panOffset}
           accentLatitudes={accentLatitudes}
           label=""
           className="absolute inset-0 pointer-events-none"
@@ -78,15 +103,48 @@ export default function SameLatMap() {
           isOverlay={true}
           features={features}
           rotation={rotation}
+          zoom={zoom}
+          panOffset={panOffset}
           onRotate={setRotation}
           interactive
           accentLatitudes={accentLatitudes}
           label=""
           className="absolute inset-0 opacity-70 mix-blend-screen cursor-grab active:cursor-grabbing"
         />
+        <div className="absolute top-3 right-3 flex flex-col gap-2 text-slate-100">
+          <div className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 shadow-xl backdrop-blur">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              Zoom
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => adjustZoom(-ZOOM_STEP)}
+                disabled={zoom <= MIN_ZOOM + 1e-3}
+                className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Zoom out"
+              >
+                -
+              </button>
+              <span className="min-w-[3.5rem] text-center text-sm font-semibold text-slate-50">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => adjustZoom(ZOOM_STEP)}
+                disabled={zoom >= MAX_ZOOM - 1e-3}
+                className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <p className="pt-3 text-sm text-slate-300">
-        Drag left or right—the map wraps so latitude lines stay aligned.
+        Drag to rotate the overlay; scroll anywhere on the map to pan both
+        layers horizontally or vertically. Use the buttons to zoom.
       </p>
     </div>
   );
