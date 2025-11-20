@@ -20,13 +20,44 @@ export default function MapLayer({
   style,
 }) {
   const svgRef = useRef(null);
+  const layersRef = useRef(null);
 
   const graticule = useMemo(() => d3.geoGraticule().step([30, 15])(), []);
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     svg.style("cursor", interactive ? "grab" : null);
-    svg.selectAll("*").remove();
+
+    if (!layersRef.current) {
+      const ocean = svg.append("path").attr("stroke", "none");
+      const graticulePath = svg
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke-width", 0.6)
+        .attr("stroke-dasharray", "2 3");
+      const accentGroup = svg.append("g");
+      const countriesGroup = svg.append("g");
+      const statesGroup = svg.append("g");
+      const labelElement = svg.append("text").attr("x", 16).attr("y", 28);
+
+      layersRef.current = {
+        ocean,
+        graticulePath,
+        accentGroup,
+        countriesGroup,
+        statesGroup,
+        labelElement,
+      };
+    }
+
+    const {
+      ocean,
+      graticulePath,
+      accentGroup,
+      countriesGroup,
+      statesGroup,
+      labelElement,
+    } = layersRef.current;
 
     const baseProjection = d3
       .geoNaturalEarth1()
@@ -45,77 +76,89 @@ export default function MapLayer({
 
     const path = d3.geoPath(projection);
 
-    svg
-      .append("path")
-      .attr("d", path({ type: "Sphere" }))
-      .attr("fill", isOverlay ? "none" : "var(--map-ocean)")
-      .attr("stroke", "none");
+    ocean.attr("d", path({ type: "Sphere" })).attr(
+      "fill",
+      isOverlay ? "none" : "var(--map-ocean)"
+    );
 
-    svg
-      .append("path")
+    graticulePath
       .attr("d", path(graticule))
-      .attr("fill", "none")
-      .attr("stroke", isOverlay ? "none" : "var(--map-grid)")
-      .attr("stroke-width", 0.6)
-      .attr("stroke-dasharray", "2 3");
+      .attr("stroke", isOverlay ? "none" : "var(--map-grid)");
 
-    accentLatitudes.forEach((lat) => {
-      const latPath = path({
-        type: "LineString",
-        coordinates: [
-          [-180, lat],
-          [180, lat],
-        ],
-      });
-      svg
-        .append("path")
-        .attr("d", latPath)
-        .attr("fill", "none")
-        .attr("stroke", isOverlay ? "none" : "var(--map-lat)")
-        .attr("stroke-width", 1.6)
-        .attr("stroke-dasharray", "6 5");
-    });
+    accentGroup
+      .selectAll("path")
+      .data(accentLatitudes)
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("fill", "none")
+            .attr("stroke-width", 1.6)
+            .attr("stroke-dasharray", "6 5"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr("stroke", isOverlay ? "none" : "var(--map-lat)")
+      .attr("d", (lat) =>
+        path({
+          type: "LineString",
+          coordinates: [
+            [-180, lat],
+            [180, lat],
+          ],
+        })
+      );
 
-    svg
-      .append("g")
+    countriesGroup
       .selectAll("path")
       .data(features)
-      .join("path")
-      .attr("d", path)
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("stroke-width", 0.6)
+            .attr("vector-effect", "non-scaling-stroke"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
       .attr("fill", isOverlay ? "var(--map-land-overlay)" : "var(--map-land)")
       .attr(
         "stroke",
         isOverlay ? "var(--map-outline-overlay)" : "var(--map-outline)"
       )
-      .attr("stroke-width", 0.6);
+      .attr("d", path);
 
-    if (stateFeatures.length) {
-      svg
-        .append("g")
-        .selectAll("path")
-        .data(stateFeatures)
-        .join("path")
-        .attr("d", path)
-        .attr("fill", "none")
-        .attr(
-          "stroke",
-          isOverlay
-            ? "var(--map-state-outline-overlay)"
-            : "var(--map-state-outline)"
-        )
-        .attr("stroke-width", 0.4);
-    }
+    statesGroup
+      .selectAll("path")
+      .data(stateFeatures)
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("fill", "none")
+            .attr("stroke-width", 0.4)
+            .attr("vector-effect", "non-scaling-stroke"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr(
+        "stroke",
+        isOverlay
+          ? "var(--map-state-outline-overlay)"
+          : "var(--map-state-outline)"
+      )
+      .attr("d", path);
 
     if (label) {
-      svg
-        .append("text")
-        .attr("x", 16)
-        .attr("y", 28)
+      labelElement
         .attr("fill", "var(--text-weak)")
         .attr("font-size", 14)
         .attr("font-weight", 600)
         .attr("letter-spacing", 0.5)
-        .text(label);
+        .text(label)
+        .attr("display", null);
+    } else {
+      labelElement.text("").attr("display", "none");
     }
   }, [
     features,
