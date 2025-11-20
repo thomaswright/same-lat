@@ -67,6 +67,7 @@ export default function SameLatMap() {
     <div className="p-4">
       <div className="relative overflow-hidden aspect-2/1">
         <MapLayer
+          isOverlay={false}
           features={features}
           rotation={0}
           accentLatitudes={accentLatitudes}
@@ -74,6 +75,7 @@ export default function SameLatMap() {
           className="absolute inset-0 pointer-events-none"
         />
         <MapLayer
+          isOverlay={true}
           features={features}
           rotation={rotation}
           onRotate={setRotation}

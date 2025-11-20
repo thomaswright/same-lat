@@ -10,9 +10,12 @@
   --panel-border: rgba(255, 255, 255, 0.08);
   --map-ocean: #0f2e4e;
   --map-grid: rgba(255, 255, 255, 0.2);
-  --map-land: #78d5ff;
-  --map-outline: rgba(0, 0, 0, 0.15);
   --map-lat: #ffc861;
+
+  --map-land: #78d5ff;
+  --map-land-overlay: #ffe278;
+  --map-outline: rgba(0, 0, 0, 0.15);
+  --map-outline-overlay: rgba(0, 0, 0, 0.15);
 }
 
 * {

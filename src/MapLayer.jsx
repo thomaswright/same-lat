@@ -10,6 +10,7 @@ function normalizeRotation(value) {
 }
 
 export default function MapLayer({
+  isOverlay,
   features,
   rotation = 0,
   interactive = false,
@@ -38,14 +39,14 @@ export default function MapLayer({
     svg
       .append("path")
       .attr("d", path({ type: "Sphere" }))
-      .attr("fill", "var(--map-ocean)")
+      .attr("fill", isOverlay ? "none" : "var(--map-ocean)")
       .attr("stroke", "none");
 
     svg
       .append("path")
       .attr("d", path(graticule))
       .attr("fill", "none")
-      .attr("stroke", "var(--map-grid)")
+      .attr("stroke", isOverlay ? "none" : "var(--map-grid)")
       .attr("stroke-width", 0.6)
       .attr("stroke-dasharray", "2 3");
 
@@ -61,7 +62,7 @@ export default function MapLayer({
         .append("path")
         .attr("d", latPath)
         .attr("fill", "none")
-        .attr("stroke", "var(--map-lat)")
+        .attr("stroke", isOverlay ? "none" : "var(--map-lat)")
         .attr("stroke-width", 1.6)
         .attr("stroke-dasharray", "6 5");
     });
@@ -72,8 +73,11 @@ export default function MapLayer({
       .data(features)
       .join("path")
       .attr("d", path)
-      .attr("fill", "var(--map-land)")
-      .attr("stroke", "var(--map-outline)")
+      .attr("fill", isOverlay ? "var(--map-land-overlay)" : "var(--map-land)")
+      .attr(
+        "stroke",
+        isOverlay ? "var(--map-outline-overlay)" : "var(--map-outline)"
+      )
       .attr("stroke-width", 0.6);
 
     if (label) {
