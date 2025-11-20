@@ -36,7 +36,9 @@ export default function MapLayer({
       .rotate([rotation, 0])
       .fitSize([width, height], { type: "Sphere" });
 
-    const scaledProjection = baseProjection.scale(baseProjection.scale() * zoom);
+    const scaledProjection = baseProjection.scale(
+      baseProjection.scale() * zoom
+    );
     const [tx, ty] = baseProjection.translate();
     const projection = scaledProjection.translate([
       tx + panOffset.x,
