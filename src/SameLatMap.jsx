@@ -262,7 +262,7 @@ export default function SameLatMap() {
         id={"drag-bar"}
         ref={dragBarRef}
         onPointerDown={handleDragBarPointerDown}
-        className="h-8 w-full bg-slate-700 rounded-xl text-center select-none cursor-ew-resize mt-2"
+        className="h-8 w-full bg-slate-700 rounded-xl flex flex-row items-center justify-center select-none cursor-ew-resize mt-2"
       >
         Drag along this bar to adjust the overlay map
       </div>
