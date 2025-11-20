@@ -21,6 +21,7 @@ export default function MapLayer({
 }) {
   const svgRef = useRef(null);
   const layersRef = useRef(null);
+  const projectionCenterRef = useRef([width / 2, height / 2]);
 
   const graticule = useMemo(() => d3.geoGraticule().step([30, 15])(), []);
 
@@ -29,18 +30,20 @@ export default function MapLayer({
     svg.style("cursor", interactive ? "grab" : null);
 
     if (!layersRef.current) {
-      const ocean = svg.append("path").attr("stroke", "none");
-      const graticulePath = svg
+      const contentGroup = svg.append("g").attr("data-layer", "content");
+      const ocean = contentGroup.append("path").attr("stroke", "none");
+      const graticulePath = contentGroup
         .append("path")
         .attr("fill", "none")
         .attr("stroke-width", 0.6)
         .attr("stroke-dasharray", "2 3");
-      const accentGroup = svg.append("g");
-      const countriesGroup = svg.append("g");
-      const statesGroup = svg.append("g");
+      const accentGroup = contentGroup.append("g");
+      const countriesGroup = contentGroup.append("g");
+      const statesGroup = contentGroup.append("g");
       const labelElement = svg.append("text").attr("x", 16).attr("y", 28);
 
       layersRef.current = {
+        contentGroup,
         ocean,
         graticulePath,
         accentGroup,
@@ -51,6 +54,7 @@ export default function MapLayer({
     }
 
     const {
+      contentGroup,
       ocean,
       graticulePath,
       accentGroup,
@@ -65,16 +69,9 @@ export default function MapLayer({
       .reflectY(flipPoles)
       .fitSize([width, height], { type: "Sphere" });
 
-    const scaledProjection = baseProjection.scale(
-      baseProjection.scale() * zoom
-    );
-    const [tx, ty] = baseProjection.translate();
-    const projection = scaledProjection.translate([
-      tx + panOffset.x,
-      ty + panOffset.y,
-    ]);
+    projectionCenterRef.current = baseProjection.translate();
 
-    const path = d3.geoPath(projection);
+    const path = d3.geoPath(baseProjection);
 
     ocean.attr("d", path({ type: "Sphere" })).attr(
       "fill",
@@ -164,8 +161,6 @@ export default function MapLayer({
     features,
     graticule,
     rotation,
-    zoom,
-    panOffset,
     flipPoles,
     stateFeatures,
     accentLatitudes,
@@ -173,6 +168,19 @@ export default function MapLayer({
     interactive,
     isOverlay,
   ]);
+
+  useEffect(() => {
+    if (!layersRef.current) return;
+    const { contentGroup } = layersRef.current;
+    if (!contentGroup) return;
+    const [cx, cy] = projectionCenterRef.current || [width / 2, height / 2];
+    const translateX = panOffset.x + cx - cx * zoom;
+    const translateY = panOffset.y + cy - cy * zoom;
+    contentGroup.attr(
+      "transform",
+      `translate(${translateX}, ${translateY}) scale(${zoom})`
+    );
+  }, [zoom, panOffset]);
 
   useEffect(() => {
     if (!interactive || !onPan || !svgRef.current) return;
