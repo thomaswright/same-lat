@@ -1,0 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+:root {
+  --bg: black;
+  --text-primary: #f2f6fb;
+  --text-weak: #b7c2d6;
+  --text-strong: #e4e9f5;
+  --panel-bg: rgba(7, 14, 26, 0.72);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --map-ocean: #0f2e4e;
+  --map-grid: rgba(255, 255, 255, 0.2);
+  --map-land: #78d5ff;
+  --map-outline: rgba(0, 0, 0, 0.15);
+  --map-lat: #ffc861;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
